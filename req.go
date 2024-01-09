@@ -52,6 +52,8 @@ type Req struct {
 	LogPayload bool
 	// Synchronous indicates whether the request should be performed synchronously.
 	Synchronous bool
+	// MaxAsyncWaitTime is the maximum time to wait for an asynchronous operation.
+	MaxAsyncWaitTime int
 }
 
 // NoLogPayload prevents logging of payloads.
@@ -64,4 +66,12 @@ func NoLogPayload(req *Req) {
 // This is only relevant for POST, PUT or DELETE requests.
 func Asynchronous(req *Req) {
 	req.Synchronous = false
+}
+
+// Maximum Asynchronous operation wait time.
+// This is only relevant for POST, PUT or DELETE requests.
+func MaxAsyncWaitTime(seconds int) func(*Req) {
+	return func(req *Req) {
+		req.MaxAsyncWaitTime = seconds
+	}
 }

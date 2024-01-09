@@ -23,7 +23,7 @@ const DefaultMaxRetries int = 3
 const DefaultBackoffMinDelay int = 2
 const DefaultBackoffMaxDelay int = 60
 const DefaultBackoffDelayFactor float64 = 3
-const MaxTaskWaitAttempts int = 10
+const DefaultDefaultMaxAsyncWaitTime int = 30
 
 var SynchronousApiEndpoints = [...]string{
 	"/dna/intent/api/v1/site",
@@ -52,6 +52,8 @@ type Client struct {
 	BackoffMaxDelay int
 	// Backoff delay factor
 	BackoffDelayFactor float64
+	// Maximum async operations wait time
+	DefaultMaxAsyncWaitTime int
 	// Authentication mutex
 	AuthenticationMutex *sync.Mutex
 }
@@ -73,15 +75,16 @@ func NewClient(url, usr, pwd string, mods ...func(*Client)) (Client, error) {
 	}
 
 	client := Client{
-		HttpClient:          &httpClient,
-		Url:                 url,
-		Usr:                 usr,
-		Pwd:                 pwd,
-		MaxRetries:          DefaultMaxRetries,
-		BackoffMinDelay:     DefaultBackoffMinDelay,
-		BackoffMaxDelay:     DefaultBackoffMaxDelay,
-		BackoffDelayFactor:  DefaultBackoffDelayFactor,
-		AuthenticationMutex: &sync.Mutex{},
+		HttpClient:              &httpClient,
+		Url:                     url,
+		Usr:                     usr,
+		Pwd:                     pwd,
+		MaxRetries:              DefaultMaxRetries,
+		BackoffMinDelay:         DefaultBackoffMinDelay,
+		BackoffMaxDelay:         DefaultBackoffMaxDelay,
+		BackoffDelayFactor:      DefaultBackoffDelayFactor,
+		DefaultMaxAsyncWaitTime: DefaultDefaultMaxAsyncWaitTime,
+		AuthenticationMutex:     &sync.Mutex{},
 	}
 
 	for _, mod := range mods {
@@ -132,13 +135,21 @@ func BackoffDelayFactor(x float64) func(*Client) {
 	}
 }
 
+// DefaultMaxAsyncWaitTime modifies the maximum wait time for async operations from the default of 30 seconds.
+func DefaultMaxAsyncWaitTime(x int) func(*Client) {
+	return func(client *Client) {
+		client.DefaultMaxAsyncWaitTime = x
+	}
+}
+
 // NewReq creates a new Req request for this client.
 func (client Client) NewReq(method, uri string, body io.Reader, mods ...func(*Req)) Req {
 	httpReq, _ := http.NewRequest(method, client.Url+uri, body)
 	req := Req{
-		HttpReq:     httpReq,
-		LogPayload:  true,
-		Synchronous: true,
+		HttpReq:          httpReq,
+		LogPayload:       true,
+		Synchronous:      true,
+		MaxAsyncWaitTime: client.DefaultMaxAsyncWaitTime,
 	}
 	for _, mod := range mods {
 		mod(&req)
@@ -223,14 +234,14 @@ func (client *Client) Do(req Req) (Res, error) {
 	}
 
 	if req.Synchronous {
-		return client.WaitTask(res)
+		return client.WaitTask(&req, &res)
 	}
 
 	return res, nil
 }
 
 // WaitTask waits for an asynchronous task to complete.
-func (client *Client) WaitTask(res Res) (Res, error) {
+func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 	var asyncOp, id string
 	if res.Get("response.taskId").Exists() {
 		asyncOp = "task"
@@ -240,6 +251,7 @@ func (client *Client) WaitTask(res Res) (Res, error) {
 		id = res.Get("executionId").String()
 	}
 	if asyncOp != "" {
+		startTime := time.Now()
 		for attempts := 0; ; attempts++ {
 			sleep := 0.5 * float64(attempts)
 			if sleep > 2 {
@@ -285,13 +297,13 @@ func (client *Client) WaitTask(res Res) (Res, error) {
 				return taskRes, nil
 			}
 			log.Printf("[DEBUG] Waiting for task '%s' to complete.", id)
-			if attempts > MaxTaskWaitAttempts {
-				log.Printf("[DEBUG] Maximum number of attempts reached for task '%s'.", id)
+			if time.Since(startTime) > time.Duration(req.MaxAsyncWaitTime)*time.Second {
+				log.Printf("[DEBUG] Maximum waiting time reached for task '%s'.", id)
 				return taskRes, fmt.Errorf("maximum waiting time for task '%s' reached", id)
 			}
 		}
 	}
-	return res, nil
+	return *res, nil
 }
 
 // Get makes a GET request and returns a GJSON result.

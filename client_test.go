@@ -189,21 +189,21 @@ func TestClientWaitTask(t *testing.T) {
 
 	// Task
 	gock.New(testURL).Get("/api/v1/task/123").Reply(200).BodyString(`{"response": {"endTime": "1", "isError": false}}`)
-	_, err = client.WaitTask(Res{Raw: `{"response": {"taskId": "123"}}`})
+	_, err = client.WaitTask(&Req{}, &Res{Raw: `{"response": {"taskId": "123"}}`})
 	assert.NoError(t, err)
 
 	// Task error
 	gock.New(testURL).Get("/api/v1/task/123").Reply(200).BodyString(`{"response": {"endTime": "1", "isError": true}}`)
-	_, err = client.WaitTask(Res{Raw: `{"response": {"taskId": "123"}}`})
+	_, err = client.WaitTask(&Req{}, &Res{Raw: `{"response": {"taskId": "123"}}`})
 	assert.Error(t, err)
 
 	// Execution
 	gock.New(testURL).Get("/dna/platform/management/business-api/v1/execution-status/123").Reply(200).BodyString(`{"status": "SUCCESS"}`)
-	_, err = client.WaitTask(Res{Raw: `{"executionId": "123"}`})
+	_, err = client.WaitTask(&Req{}, &Res{Raw: `{"executionId": "123"}`})
 	assert.NoError(t, err)
 
 	// Execution error
 	gock.New(testURL).Get("/dna/platform/management/business-api/v1/execution-status/123").Reply(200).BodyString(`{"status": "FAILURE"}`)
-	_, err = client.WaitTask(Res{Raw: `{"executionId": "123"}`})
+	_, err = client.WaitTask(&Req{}, &Res{Raw: `{"executionId": "123"}`})
 	assert.Error(t, err)
 }
