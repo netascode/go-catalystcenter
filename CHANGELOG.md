@@ -1,4 +1,4 @@
-## 0.1.1 (unreleased)
+## 0.1.1
 
 - Add option to set default maximum waiting time for async operations and override ip per request
 
