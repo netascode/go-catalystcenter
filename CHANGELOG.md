@@ -1,3 +1,7 @@
+## 0.1.3 (unreleased)
+
+- Optimize wait time after 429 response
+
 ## 0.1.2
 
 - Retry on 429 HTTP responses
