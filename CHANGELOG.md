@@ -1,4 +1,4 @@
-## 0.1.4 (unreleased)
+## 0.1.4
 
 - Implement synchronous request only for non-GET requests
 
