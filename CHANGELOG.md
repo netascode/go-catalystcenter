@@ -1,3 +1,7 @@
+## 0.1.4 (unreleased)
+
+- Implement synchronous request only for non-GET requests
+
 ## 0.1.3
 
 - Optimize wait time after 429 response

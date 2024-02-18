@@ -246,7 +246,7 @@ func (client *Client) Do(req Req) (Res, error) {
 		}
 	}
 
-	if req.Synchronous {
+	if req.Synchronous && req.HttpReq.Method != "GET" && req.HttpReq.Method != "" {
 		return client.WaitTask(&req, &res)
 	}
 
