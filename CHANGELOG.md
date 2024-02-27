@@ -1,3 +1,7 @@
+## 0.1.5 (unreleased)
+
+- Handle pagination of large GET responses transparently
+
 ## 0.1.4
 
 - Implement synchronous request only for non-GET requests
