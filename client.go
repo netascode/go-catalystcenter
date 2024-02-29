@@ -117,6 +117,14 @@ func NewClient(url, usr, pwd string, mods ...func(*Client)) (Client, error) {
 	return client, nil
 }
 
+// replaceWhitspace replaces space with URL Encoding %20 in URI
+func replaceWhitespace(s string) string {
+	// Replace whitespace with %20
+	encodedURI := strings.ReplaceAll(s, " ", "%20")
+
+	return encodedURI
+}
+
 // Insecure determines if insecure https connections are allowed. Default value is true.
 func Insecure(x bool) func(*Client) {
 	return func(client *Client) {
@@ -168,7 +176,11 @@ func DefaultMaxAsyncWaitTime(x int) func(*Client) {
 
 // NewReq creates a new Req request for this client.
 func (client Client) NewReq(method, uri string, body io.Reader, mods ...func(*Req)) Req {
-	httpReq, _ := http.NewRequest(method, client.Url+uri, body)
+
+	// Replace whitespace with %20
+	encodedURI := replaceWhitespace(uri)
+	httpReq, _ := http.NewRequest(method, client.Url+encodedURI, body)
+
 	req := Req{
 		HttpReq:          httpReq,
 		LogPayload:       true,
@@ -435,7 +447,14 @@ func pathWithOffset(path string, offset int) string {
 		sep = "&"
 	}
 
-	return fmt.Sprintf("%s%soffset=%d", path, sep, offset)
+	// Split the path into segments, encode each segment, and then join them back
+	segments := strings.Split(path, "/")
+	for i, segment := range segments {
+		segments[i] = replaceWhitespace(segment)
+	}
+	encodedPath := strings.Join(segments, "/")
+
+	return fmt.Sprintf("%s%soffset=%d", encodedPath, sep, offset)
 }
 
 type gatherer struct {
