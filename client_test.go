@@ -41,7 +41,7 @@ func TestNewClient(t *testing.T) {
 	assert.Equal(t, client.HttpClient.Timeout, 120*time.Second)
 }
 
-// TestClientLogin tests the Client::Login method.
+// TestClientLogin tests the Client.Login method.
 func TestClientLogin(t *testing.T) {
 	defer gock.Off()
 	client := testClient()
@@ -59,7 +59,7 @@ func TestClientLogin(t *testing.T) {
 	assert.Error(t, client.Login())
 }
 
-// TestClientGet tests the Client::Get method.
+// TestClientGet tests the Client.Get method.
 func TestClientGet(t *testing.T) {
 	defer gock.Off()
 	client := authenticatedTestClient()
@@ -92,7 +92,7 @@ func TestClientGet(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// TestClientDeleteDn tests the Client::Delete method.
+// TestClientDelete tests the Client.Delete method.
 func TestClientDelete(t *testing.T) {
 	defer gock.Off()
 	client := authenticatedTestClient()
@@ -112,7 +112,7 @@ func TestClientDelete(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// TestClientPost tests the Client::Post method.
+// TestClientPost tests the Client.Post method.
 func TestClientPost(t *testing.T) {
 	defer gock.Off()
 	client := authenticatedTestClient()
@@ -146,7 +146,7 @@ func TestClientPost(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// TestClientPost tests the Client::Post method.
+// TestClientPut tests the Client.Put method.
 func TestClientPut(t *testing.T) {
 	defer gock.Off()
 	client := authenticatedTestClient()
@@ -180,7 +180,7 @@ func TestClientPut(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// TestClientPost tests the Client::WaitTask method.
+// TestClientWaitTask tests the Client.WaitTask method.
 func TestClientWaitTask(t *testing.T) {
 	defer gock.Off()
 	client := authenticatedTestClient()
