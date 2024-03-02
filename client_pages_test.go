@@ -2,6 +2,7 @@ package cc
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -163,10 +164,6 @@ func TestClientGet_Concurrent(t *testing.T) {
 	defer gock.Off()
 	client := authenticatedTestClient()
 
-	// For pagination tests to be readable, we use dummy page size of 3 instead of 500.
-	// Since we are changing a package-level var, this test cannot be run on t.Parallel().
-	maxItems = 3
-
 	recorder := make(chan string)
 	cleanup := make(chan bool)
 
@@ -248,48 +245,47 @@ func TestClientGet_Concurrent(t *testing.T) {
 		}()
 	}
 
-	// GET that glues 3 pages
+	// For pagination tests to be readable, we use dummy page size of 3 instead of 500.
+	// Since we are changing a package-level var, this test cannot be run on t.Parallel().
+	maxItems = 3
+
+	// GET that glues 3 pages.
 	go func() {
-		e := struct{}{}
 		gock.New(testURL).Get("/url").
 			Reply(200).
-			JSON(map[string]any{
-				"response": []any{e, e, e},
-			}).
+			BodyString(`{"response":[{},{},{}]}`).
 			Map(func(resp *http.Response) *http.Response {
 				recorder <- "get"
 				return resp
 			})
 		gock.New(testURL).Get("/url").MatchParam("offset", "4").
 			Reply(200).
-			JSON(map[string]any{
-				"response": []any{e, e, e},
-			}).
+			BodyString(`{"response":[{},{},{}]}`).
 			Map(func(resp *http.Response) *http.Response {
 				recorder <- "get"
 				return resp
 			})
 		gock.New(testURL).Get("/url").MatchParam("offset", "7").
 			Reply(200).
-			JSON(map[string]any{
-				"response": []any{e, e},
-			}).
+			BodyString(`{"response":[{},{}]}`).
 			Map(func(resp *http.Response) *http.Response {
 				recorder <- "get"
 				return resp
 			})
+
 		res, err := client.Get("/url")
 		assert.NoError(t, err)
-		assert.Equal(t, `{"response":[{},{},{},{},{},{},{},{}]}`+"\n", res.Raw)
+		assert.Equal(t, `{"response":[{},{},{},{},{},{},{},{}]}`, res.Raw)
 		cleanup <- true
 	}()
 
-	got := ""
-	// Serialize writing the result, all the requests wait their turn.
-	// Record the sequence of events.
+	var got strings.Builder
+	// Record the sequence of events in a serialized manner. The 3-page Get should show
+	// as a sequence "get,get,get", uninterrupted by any random post/delete/etc.
 	go func() {
 		for v := range recorder {
-			got = got + "," + v
+			got.WriteString(",")
+			got.WriteString(v)
 		}
 		cleanup <- true
 	}()
@@ -300,7 +296,7 @@ func TestClientGet_Concurrent(t *testing.T) {
 	}
 
 	close(recorder)
-	<-cleanup // and the serializer itself
+	<-cleanup // the serializer itself
 
-	assert.Contains(t, got, "get,get,get")
+	assert.Contains(t, got.String(), "get,get,get")
 }
