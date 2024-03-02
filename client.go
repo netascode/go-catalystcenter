@@ -363,6 +363,9 @@ var maxItems = 500
 // modification of items.
 // Unfortunately, the protection does not cover any requests from other clients/processes/systems.
 func (client *Client) Get(path string, mods ...func(*Req)) (Res, error) {
+	// This channel operation will wait for any writers to complete first.
+	// Improvement idea: optimistic GET without any waiting. But then if it returns 500 items,
+	// throw its result away, wait for lock, restart with pagination?
 	client.readers <- +1
 	defer func() { client.readers <- -1 }()
 
