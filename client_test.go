@@ -66,9 +66,10 @@ func TestClientGet(t *testing.T) {
 	var err error
 
 	// Success
-	gock.New(testURL).Get("/url").Reply(200)
-	_, err = client.Get("/url")
+	gock.New(testURL).Get("/url").Reply(200).BodyString(`{"response":"a string"}`)
+	res, err := client.Get("/url")
 	assert.NoError(t, err)
+	assert.Equal(t, "a string", res.Get("response").String())
 
 	// HTTP error
 	gock.New(testURL).Get("/url").ReplyError(errors.New("fail"))

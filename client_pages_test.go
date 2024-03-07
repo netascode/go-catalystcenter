@@ -78,20 +78,6 @@ func TestClientGet_PagesWithExtras(t *testing.T) {
 	assert.Equal(t, `{"response":[1,2,3,4],"extra":"x"}`, res.Raw)
 }
 
-// TestClientGet_FirstNonArray tests the Client.Get against non-array attribute "response".
-func TestClientGet_FirstNonArray(t *testing.T) {
-	defer gock.Off()
-	client := authenticatedTestClient()
-
-	gock.New(testURL).Get("/url").
-		Reply(200).
-		BodyString(`{"response":"a string"}`)
-
-	res, err := client.Get("/url")
-	assert.NoError(t, err)
-	assert.Equal(t, "a string", res.Get("response").String())
-}
-
 // TestClientGet_ArrayVaries tests the Client.Get against a corner case when response varies between
 // array and non-array.
 func TestClientGet_ArrayVaries(t *testing.T) {
