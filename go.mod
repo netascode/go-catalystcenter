@@ -1,6 +1,6 @@
 module github.com/netascode/go-catalystcenter
 
-go 1.19
+go 1.23.6
 
 require (
 	github.com/stretchr/testify v1.10.0
