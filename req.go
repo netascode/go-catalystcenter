@@ -77,3 +77,8 @@ func MaxAsyncWaitTime(seconds int) func(*Req) {
 		req.MaxAsyncWaitTime = seconds
 	}
 }
+
+// NoWait operation
+func NoWait(req *Req) {
+	req.NoWait = true
+}
