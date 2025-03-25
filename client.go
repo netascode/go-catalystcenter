@@ -63,7 +63,7 @@ type Client struct {
 // NewClient creates a new Catalyst Center HTTP client.
 // Pass modifiers in to modify the behavior of the client, e.g.
 //
-//	client, _ := NewClient("cc1.cisco.com", "user", "password", RequestTimeout(120))
+//	client, _ := NewClient("https://cc1.cisco.com", "user", "password", RequestTimeout(120))
 func NewClient(url, usr, pwd string, mods ...func(*Client)) (Client, error) {
 	tr := http.DefaultTransport.(*http.Transport).Clone()
 	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}

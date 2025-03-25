@@ -1,3 +1,7 @@
+## 0.1.6 (unreleased)
+
+- Honor proxy settings (`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` environment variables)
+
 ## 0.1.5
 
 - Handle pagination of large GET responses transparently
