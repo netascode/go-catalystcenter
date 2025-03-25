@@ -1,6 +1,7 @@
 ## 0.1.6 (unreleased)
 
 - Honor proxy settings (`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` environment variables)
+- Add `NoWait` option to `Request` to disable waiting for async operations
 
 ## 0.1.5
 
