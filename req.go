@@ -54,6 +54,8 @@ type Req struct {
 	Synchronous bool
 	// MaxAsyncWaitTime is the maximum time to wait for an asynchronous operation.
 	MaxAsyncWaitTime int
+	// NoWait indicates whether to wait for the task or not. If True, the WaitTask function will not be executed.
+	NoWait bool
 }
 
 // NoLogPayload prevents logging of payloads.
@@ -74,4 +76,9 @@ func MaxAsyncWaitTime(seconds int) func(*Req) {
 	return func(req *Req) {
 		req.MaxAsyncWaitTime = seconds
 	}
+}
+
+// NoWait operation
+func NoWait(req *Req) {
+	req.NoWait = true
 }

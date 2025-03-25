@@ -173,6 +173,7 @@ func (client Client) NewReq(method, uri string, body io.Reader, mods ...func(*Re
 		LogPayload:       true,
 		Synchronous:      true,
 		MaxAsyncWaitTime: client.DefaultMaxAsyncWaitTime,
+		NoWait:           false,
 	}
 	for _, mod := range mods {
 		mod(&req)
@@ -273,7 +274,7 @@ func (client *Client) Do(req Req) (Res, error) {
 		}
 	}
 
-	if req.Synchronous && req.HttpReq.Method != "GET" && req.HttpReq.Method != "" {
+	if !req.NoWait && req.Synchronous && req.HttpReq.Method != "GET" && req.HttpReq.Method != "" {
 		return client.WaitTask(&req, &res)
 	}
 
