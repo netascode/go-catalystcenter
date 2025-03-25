@@ -65,9 +65,8 @@ type Client struct {
 //
 //	client, _ := NewClient("cc1.cisco.com", "user", "password", RequestTimeout(120))
 func NewClient(url, usr, pwd string, mods ...func(*Client)) (Client, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	cookieJar, _ := cookiejar.New(nil)
 	httpClient := http.Client{
