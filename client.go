@@ -58,6 +58,8 @@ type Client struct {
 	AuthenticationMutex *sync.Mutex
 	readers             chan int
 	writers             chan int
+	// writingMutex protects against concurrent DELETE/POST/PUT requests towards the API.
+	writingMutex *sync.Mutex
 }
 
 // NewClient creates a new Catalyst Center HTTP client.
@@ -88,6 +90,7 @@ func NewClient(url, usr, pwd string, mods ...func(*Client)) (Client, error) {
 		AuthenticationMutex:     &sync.Mutex{},
 		readers:                 make(chan int),
 		writers:                 make(chan int),
+		writingMutex:            &sync.Mutex{},
 	}
 
 	go func() {
@@ -206,6 +209,11 @@ func (client *Client) Do(req Req) (Res, error) {
 	}()
 
 	if req.HttpReq.Method == "DELETE" || req.HttpReq.Method == "POST" || req.HttpReq.Method == "PUT" {
+		if req.UseMutex {
+			client.writingMutex.Lock()
+			defer client.writingMutex.Unlock()
+		}
+
 		client.writers <- +1
 		defer func() { client.writers <- -1 }()
 	}

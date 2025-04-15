@@ -56,6 +56,8 @@ type Req struct {
 	MaxAsyncWaitTime int
 	// NoWait indicates whether to wait for the task or not. If True, the WaitTask function will not be executed.
 	NoWait bool
+	// UseMutex indicates whether to use the writingMutex for this request
+	UseMutex bool
 }
 
 // NoLogPayload prevents logging of payloads.
@@ -81,4 +83,9 @@ func MaxAsyncWaitTime(seconds int) func(*Req) {
 // NoWait operation
 func NoWait(req *Req) {
 	req.NoWait = true
+}
+
+// UseMutex enables the use of the writingMutex for this request.
+func UseMutex(req *Req) {
+	req.UseMutex = true
 }
