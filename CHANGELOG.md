@@ -1,4 +1,4 @@
-## 0.1.7 (unreleased)
+## 0.1.7
 
 - Add `writingMutex` to prevent multiple concurrent operations (such as Create, Update, Delete) and introduce `UseMutex` option in `Request` to enable it
 
