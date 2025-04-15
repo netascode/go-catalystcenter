@@ -1,3 +1,7 @@
+## 0.1.7 (unreleased)
+
+- Add `writingMutex` to prevent multiple concurrent operations (such as Create, Update, Delete) and introduce `UseMutex` option in `Request` to enable it
+
 ## 0.1.6
 
 - Honor proxy settings (`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` environment variables)
