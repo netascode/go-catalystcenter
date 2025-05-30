@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,8 +13,14 @@ import (
 )
 
 const (
-	testURL = "https://10.0.0.1"
+	testURL                  = "https://10.0.0.1"
+	testURLWithTrailingSlash = "https://10.0.0.1/"
 )
+
+var testURLs = []string{
+	testURL,
+	testURLWithTrailingSlash,
+}
 
 func testClient() Client {
 	client, _ := NewClient(testURL, "usr", "pwd", MaxRetries(0))
@@ -37,8 +44,15 @@ func (r ErrReader) Read(buf []byte) (int, error) {
 
 // TestNewClient tests the NewClient function.
 func TestNewClient(t *testing.T) {
-	client, _ := NewClient(testURL, "usr", "pwd", RequestTimeout(120))
-	assert.Equal(t, client.HttpClient.Timeout, 120*time.Second)
+	for _, testURL := range testURLs {
+		t.Run(testURL, func(t *testing.T) {
+			client, _ := NewClient(testURL, "usr", "pwd", RequestTimeout(120))
+			assert.Equal(t, client.HttpClient.Timeout, 120*time.Second)
+			// Verify the URL is sanitized correctly (trailing slash removed)
+			expectedURL := strings.TrimSuffix(testURL, "/")
+			assert.Equal(t, expectedURL, client.Url)
+		})
+	}
 }
 
 // TestClientLogin tests the Client.Login method.

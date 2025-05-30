@@ -1,3 +1,7 @@
+## 0.1.8 (unreleased)
+
+- Remove trailing slash from base URL to prevent double slashes in the final request URL
+
 ## 0.1.7
 
 - Add `writingMutex` to prevent multiple concurrent operations (such as Create, Update, Delete) and introduce `UseMutex` option in `Request` to enable it
