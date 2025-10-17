@@ -524,13 +524,26 @@ func (client *Client) Login() error {
 
 // Login if no token available.
 func (client *Client) Authenticate() error {
-	var err error
 	client.AuthenticationMutex.Lock()
-	if client.Token == "" {
-		err = client.Login()
+	defer client.AuthenticationMutex.Unlock()
+
+	if client.Token != "" {
+		return nil
 	}
-	client.AuthenticationMutex.Unlock()
-	return err
+
+	for attempts := 0; ; attempts++ {
+		err := client.Login()
+		if err == nil {
+			return nil
+		}
+
+		log.Printf("[ERROR] Authenticate: Login attempt %d failed: %v", attempts+1, err)
+		if ok := client.Backoff(attempts); !ok {
+			log.Printf("[ERROR] Authenticate: Max retries (%d) exhausted for login. Returning last error.", client.MaxRetries)
+			return fmt.Errorf("failed to authenticate after %d attempts: %w", attempts+1, err)
+		}
+		log.Printf("[WARNING] Authenticate: Retrying login after failure (attempt %d of %d)...", attempts+1, client.MaxRetries)
+	}
 }
 
 // Backoff waits following an exponential backoff algorithm
