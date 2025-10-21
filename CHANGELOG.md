@@ -1,4 +1,4 @@
-## 0.1.9 (unreleased)
+## 0.1.9
 
 - Retry on authentication requests
 
