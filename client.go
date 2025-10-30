@@ -180,6 +180,7 @@ func (client Client) NewReq(method, uri string, body io.Reader, mods ...func(*Re
 		Synchronous:      true,
 		MaxAsyncWaitTime: client.DefaultMaxAsyncWaitTime,
 		NoWait:           false,
+		ReAuthAttempted:  false,
 	}
 	for _, mod := range mods {
 		mod(&req)
@@ -258,6 +259,23 @@ func (client *Client) Do(req Req) (Res, error) {
 
 		if httpRes.StatusCode >= 200 && httpRes.StatusCode <= 299 {
 			break
+		} else if httpRes.StatusCode == 401 {
+			if req.ReAuthAttempted {
+				log.Printf("[ERROR] Original request failed with 401 even after re-authentication. Returning 401.")
+				return res, fmt.Errorf("HTTP Request failed: StatusCode %v (after re-authentication)", httpRes.StatusCode)
+			}
+
+			log.Printf("[WARNING] Received 401 Unauthorized. Attempting to re-authenticate.")
+			req.ReAuthAttempted = true
+
+			authErr := client.Authenticate()
+			if authErr != nil {
+				log.Printf("[ERROR] Re-authentication failed: %v. Original request failed with 401.", authErr)
+				return res, fmt.Errorf("authentication failed after 401: %w", authErr)
+			}
+
+			log.Printf("[INFO] Re-authentication successful. Retrying original request.")
+			continue
 		} else {
 			if ok := client.Backoff(attempts); !ok {
 				log.Printf("[ERROR] HTTP Request failed: StatusCode %v", httpRes.StatusCode)
