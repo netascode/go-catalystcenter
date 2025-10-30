@@ -58,7 +58,7 @@ type Req struct {
 	NoWait bool
 	// UseMutex indicates whether to use the writingMutex for this request
 	UseMutex bool
-	// UseMutex indicates whether request already tried to reauthenticate in case of 401
+	// ReAuthAttempted indicates whether request already tried to reauthenticate in case of 401
 	ReAuthAttempted bool
 }
 
