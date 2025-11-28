@@ -180,6 +180,7 @@ func (client Client) NewReq(method, uri string, body io.Reader, mods ...func(*Re
 		Synchronous:      true,
 		MaxAsyncWaitTime: client.DefaultMaxAsyncWaitTime,
 		NoWait:           false,
+		ReAuthAttempted:  false,
 	}
 	for _, mod := range mods {
 		mod(&req)
@@ -258,6 +259,23 @@ func (client *Client) Do(req Req) (Res, error) {
 
 		if httpRes.StatusCode >= 200 && httpRes.StatusCode <= 299 {
 			break
+		} else if httpRes.StatusCode == 401 {
+			if req.ReAuthAttempted {
+				log.Printf("[ERROR] Original request failed with 401 even after re-authentication. Returning 401.")
+				return res, fmt.Errorf("HTTP Request failed: StatusCode %v (after re-authentication)", httpRes.StatusCode)
+			}
+
+			log.Printf("[WARNING] Received 401 Unauthorized. Attempting to re-authenticate.")
+			req.ReAuthAttempted = true
+
+			authErr := client.Authenticate()
+			if authErr != nil {
+				log.Printf("[ERROR] Re-authentication failed: %v. Original request failed with 401.", authErr)
+				return res, fmt.Errorf("authentication failed after 401: %w", authErr)
+			}
+
+			log.Printf("[INFO] Re-authentication successful. Retrying original request.")
+			continue
 		} else {
 			if ok := client.Backoff(attempts); !ok {
 				log.Printf("[ERROR] HTTP Request failed: StatusCode %v", httpRes.StatusCode)
@@ -304,6 +322,7 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 	}
 	if asyncOp != "" {
 		startTime := time.Now()
+		reAuthAttempted := false
 		for attempts := 0; ; attempts++ {
 			sleep := 0.5 * float64(attempts)
 			if sleep > 2 {
@@ -322,6 +341,28 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 				return Res{}, err
 			}
 			defer httpTaskRes.Body.Close()
+
+			// Handle 401 Unauthorized - reuath token
+			if httpTaskRes.StatusCode == 401 {
+				if reAuthAttempted {
+					log.Printf("[ERROR] Task status check failed with 401 even after re-authentication. Returning 401.")
+					return Res{}, fmt.Errorf("task status check failed: StatusCode 401 (after re-authentication)")
+				}
+
+				log.Printf("[WARNING] Task status check received 401 Unauthorized. Attempting to re-authenticate.")
+				reAuthAttempted = true
+
+				authErr := client.Authenticate()
+				if authErr != nil {
+					log.Printf("[ERROR] Re-authentication failed: %v. Task status check failed with 401.", authErr)
+					return Res{}, fmt.Errorf("authentication failed after 401: %w", authErr)
+				}
+
+				log.Printf("[INFO] Re-authentication successful. Retrying task status check.")
+				attempts-- // Don't count re-auth as a polling attempt
+				continue
+			}
+
 			taskBodyBytes, err := io.ReadAll(httpTaskRes.Body)
 			if err != nil {
 				log.Printf("[ERROR] Cannot decode response body: %+v", err)
@@ -330,6 +371,10 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 			}
 			taskRes := Res(gjson.ParseBytes(taskBodyBytes))
 			log.Printf("[DEBUG] task response %v", taskRes.String())
+
+			// Reset re-auth flag on successful response
+			reAuthAttempted = false
+
 			if taskRes.Get("response.isError").Bool() {
 				log.Printf("[ERROR] Task '%s' failed: %s, %s", id, taskRes.Get("response.progress").String(), taskRes.Get("response.failureReason").String())
 				log.Printf("[DEBUG] Exit from Do method")
