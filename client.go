@@ -323,7 +323,7 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 	if asyncOp != "" {
 		startTime := time.Now()
 		reAuthAttempted := false
-		for attempts := 0; ; attempts++ {
+		for attempts := 0; attempts < client.MaxRetries; attempts++ {
 			sleep := 0.5 * float64(attempts)
 			if sleep > 2 {
 				sleep = 2
@@ -342,7 +342,7 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 			}
 			defer httpTaskRes.Body.Close()
 
-			// Handle 401 Unauthorized - reuath token
+			// Handle 401 Unauthorized - reauth token
 			if httpTaskRes.StatusCode == 401 {
 				if reAuthAttempted {
 					log.Printf("[ERROR] Task status check failed with 401 even after re-authentication. Returning 401.")
@@ -576,7 +576,7 @@ func (client *Client) Authenticate() error {
 		return nil
 	}
 
-	for attempts := 0; ; attempts++ {
+	for attempts := 0; attempts < client.MaxRetries; attempts++ {
 		err := client.Login()
 		if err == nil {
 			return nil
