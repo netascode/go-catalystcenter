@@ -589,7 +589,7 @@ func (client *Client) Authenticate() error {
 		}
 		log.Printf("[WARNING] Authenticate: Retrying login after failure (attempt %d of %d)...", attempts+1, client.MaxRetries)
 	}
-	return nil
+	return fmt.Errorf("failed to authenticate after %d attempts", client.MaxRetries+1)
 }
 
 // Backoff waits following an exponential backoff algorithm
