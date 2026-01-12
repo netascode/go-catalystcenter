@@ -25,6 +25,7 @@ const DefaultBackoffMinDelay int = 2
 const DefaultBackoffMaxDelay int = 60
 const DefaultBackoffDelayFactor float64 = 3
 const DefaultDefaultMaxAsyncWaitTime int = 30
+const MaxAttempts int = 50
 
 var SynchronousApiEndpoints = [...]string{
 	"/dna/intent/api/v1/site",
@@ -323,7 +324,7 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 	if asyncOp != "" {
 		startTime := time.Now()
 		reAuthAttempted := false
-		for attempts := 0; attempts <= client.MaxRetries; attempts++ {
+		for attempts := 0; attempts <= MaxAttempts; attempts++ {
 			sleep := 0.5 * float64(attempts)
 			if sleep > 2 {
 				sleep = 2
@@ -576,7 +577,7 @@ func (client *Client) Authenticate() error {
 		return nil
 	}
 
-	for attempts := 0; attempts <= client.MaxRetries; attempts++ {
+	for attempts := 0; attempts <= MaxAttempts; attempts++ {
 		err := client.Login()
 		if err == nil {
 			return nil
