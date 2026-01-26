@@ -1,3 +1,7 @@
+## Unreleased
+
+- Reauthenticate expired token
+
 ## 0.1.9
 
 - Retry on authentication requests
