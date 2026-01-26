@@ -1,4 +1,4 @@
-## Unreleased
+## 0.1.10
 
 - Reauthenticate expired token
 
