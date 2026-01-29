@@ -269,6 +269,7 @@ func (client *Client) Do(req Req) (Res, error) {
 			log.Printf("[WARNING] Received 401 Unauthorized. Attempting to re-authenticate.")
 			req.ReAuthAttempted = true
 
+			client.Token = ""
 			authErr := client.Authenticate()
 			if authErr != nil {
 				log.Printf("[ERROR] Re-authentication failed: %v. Original request failed with 401.", authErr)
@@ -353,6 +354,7 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 				log.Printf("[WARNING] Task status check received 401 Unauthorized. Attempting to re-authenticate.")
 				reAuthAttempted = true
 
+				client.Token = ""
 				authErr := client.Authenticate()
 				if authErr != nil {
 					log.Printf("[ERROR] Re-authentication failed: %v. Task status check failed with 401.", authErr)
