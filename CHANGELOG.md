@@ -1,3 +1,7 @@
+## Unreleased
+
+- Enhance 401 response handling and automatic retry
+
 ## 0.1.10
 
 - Reauthenticate expired token
