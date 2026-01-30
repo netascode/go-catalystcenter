@@ -1,4 +1,4 @@
-## Unreleased
+## 0.1.11
 
 - Enhance 401 response handling and automatic retry
 
