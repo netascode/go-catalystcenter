@@ -1,3 +1,7 @@
+## 0.2.0 (unreleased)
+
+- Add `UserAgent` option to set a custom HTTP User-Agent string on authentication, API, and async task-polling requests
+
 ## 0.1.11
 
 - Enhance 401 response handling and automatic retry

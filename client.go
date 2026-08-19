@@ -55,6 +55,8 @@ type Client struct {
 	BackoffDelayFactor float64
 	// Maximum async operations wait time
 	DefaultMaxAsyncWaitTime int
+	// UserAgent is the HTTP User-Agent string sent with requests.
+	UserAgent string
 	// Authentication mutex ensures that API login is non-concurrent
 	AuthenticationMutex *sync.Mutex
 	readers             chan int
@@ -91,6 +93,7 @@ func NewClient(url, usr, pwd string, mods ...func(*Client)) (Client, error) {
 		BackoffMaxDelay:         DefaultBackoffMaxDelay,
 		BackoffDelayFactor:      DefaultBackoffDelayFactor,
 		DefaultMaxAsyncWaitTime: DefaultDefaultMaxAsyncWaitTime,
+		UserAgent:               "go-catalystcenter netascode",
 		AuthenticationMutex:     &sync.Mutex{},
 		readers:                 make(chan int),
 		writers:                 make(chan int),
@@ -172,9 +175,19 @@ func DefaultMaxAsyncWaitTime(x int) func(*Client) {
 	}
 }
 
+// UserAgent modifies the HTTP User-Agent string sent with requests.
+func UserAgent(x string) func(*Client) {
+	return func(client *Client) {
+		client.UserAgent = x
+	}
+}
+
 // NewReq creates a new Req request for this client.
 func (client Client) NewReq(method, uri string, body io.Reader, mods ...func(*Req)) Req {
 	httpReq, _ := http.NewRequest(method, client.Url+uri, body)
+	if client.UserAgent != "" {
+		httpReq.Header.Set("User-Agent", client.UserAgent)
+	}
 	req := Req{
 		HttpReq:          httpReq,
 		LogPayload:       true,
@@ -338,6 +351,9 @@ func (client *Client) WaitTask(req *Req, res *Res) (Res, error) {
 				taskReq, _ = http.NewRequest("GET", client.Url+"/dna/platform/management/business-api/v1/execution-status/"+id, nil)
 			}
 			taskReq.Header.Set("X-Auth-Token", client.Token)
+			if client.UserAgent != "" {
+				taskReq.Header.Set("User-Agent", client.UserAgent)
+			}
 			httpTaskRes, err := client.HttpClient.Do(taskReq)
 			if err != nil {
 				return Res{}, err
